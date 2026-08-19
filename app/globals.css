@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-blue: #0759AD;
+  --brand-blue-dark: #073F80;
+  --brand-green: #42A62B;
+  --brand-green-dark: #287E1E;
+  --brand-navy: #13233A;
+  --brand-bg: #F5F9FC;
+}
+
+html, body { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #13233A;
+  background: #ffffff;
+}
+
+/* Nice section rhythm */
+.section { padding-top: 5rem; padding-bottom: 5rem; }
+@media (max-width: 768px) { .section { padding-top: 3.25rem; padding-bottom: 3.25rem; } }
+
+/* Subtle underline reveal for links */
+.nav-link { position: relative; }
+.nav-link::after {
+  content: ""; position: absolute; left: 0; bottom: -4px; height: 2px; width: 0;
+  background: #0759AD; transition: width .25s ease;
+}
+.nav-link:hover::after { width: 100%; }
+
+/* Card hover */
+.card-hover { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -12px rgba(19,35,58,.18); border-color: #0759AD; }
+
+/* Utility for hiding scrollbars on mobile scroll rows if needed */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Prevent horizontal scroll on any element */
+html, body { overflow-x: hidden; }
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 217 48% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 217 48% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 48% 15%;
+    --primary: 210 92% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 217 48% 15%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 108 59% 41%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 210 92% 35%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}

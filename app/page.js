@@ -8,6 +8,9 @@ import {
   Home as HomeIcon, MapPin, ArrowRight, Clock, HeartHandshake, CheckCircle2
 } from 'lucide-react'
 import { BUSINESS, waLink, waEnquire } from '@/lib/business'
+import { FAQS } from '@/lib/faq'
+import FaqAccordion from '@/components/site/FaqAccordion'
+import Link from 'next/link'
 
 // ---------- Brand primitives ----------
 const BRAND = {
@@ -16,12 +19,13 @@ const BRAND = {
 }
 
 const nav = [
-  { label: 'Home', href: '#home' },
-  { label: 'Services', href: '#services' },
+  { label: 'Home', href: '/' },
+  { label: 'Services', href: '/services' },
   { label: 'Price List', href: '/price-list' },
   { label: 'How It Works', href: '#how' },
-  { label: 'About Us', href: '#about' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'About Us', href: '/about' },
+  { label: 'FAQ', href: '/faq' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 // ---------- Logo (uses official Urban Dry Clean artwork at /public/logo.jpg) ----------
@@ -60,26 +64,26 @@ function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-24 items-center justify-between">
           <a href="#home" aria-label="Urban Dry Clean home"><Logo /></a>
-          <nav className="hidden lg:flex items-center gap-7">
+          <nav className="hidden xl:flex items-center gap-6">
             {nav.map(n => (
-              <a key={n.href} href={n.href} className="nav-link text-[14.5px] font-medium text-slate-700 hover:text-[#0759AD]">{n.label}</a>
+              <a key={n.href} href={n.href} className="nav-link text-[14px] font-medium text-slate-700 hover:text-[#0759AD]">{n.label}</a>
             ))}
           </nav>
           <div className="hidden lg:flex items-center gap-2">
-            <a href={`tel:${BUSINESS.phoneRaw}`} className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-800 hover:border-[#0759AD] hover:text-[#0759AD]">
+            <a href={`tel:${BUSINESS.phoneRaw}`} data-analytics="phone_click" className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-800 hover:border-[#0759AD] hover:text-[#0759AD]">
               <Phone className="h-4 w-4" /> Call Now
             </a>
-            <a href={waLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm" style={{ background: BRAND.green }}>
+            <a href={waLink()} target="_blank" rel="noopener noreferrer" data-analytics="whatsapp_click" className="inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm" style={{ background: BRAND.green }}>
               <MessageCircle className="h-4 w-4" /> Book Pickup
             </a>
           </div>
-          <button onClick={() => setOpen(o => !o)} className="lg:hidden inline-flex items-center justify-center rounded-md p-2 text-slate-700 hover:bg-slate-100" aria-label="Toggle menu">
+          <button onClick={() => setOpen(o => !o)} className="xl:hidden inline-flex items-center justify-center rounded-md p-2 text-slate-700 hover:bg-slate-100" aria-label="Toggle menu">
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
       {open && (
-        <div className="lg:hidden border-t border-slate-100 bg-white">
+        <div className="xl:hidden border-t border-slate-100 bg-white">
           <div className="px-4 py-3 flex flex-col">
             {nav.map(n => (
               <a key={n.href} href={n.href} onClick={() => setOpen(false)} className="py-2.5 text-[15px] font-medium text-slate-800">{n.label}</a>
@@ -119,12 +123,12 @@ function Hero() {
               Professional garment care with convenient pickup and delivery. Neatly finished, carefully handled &mdash; booked in seconds on WhatsApp.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <a href={waLink()} target="_blank" rel="noopener noreferrer"
+              <a href={waLink()} target="_blank" rel="noopener noreferrer" data-analytics="whatsapp_click"
                 className="inline-flex items-center justify-center gap-2 rounded-md px-6 py-3.5 text-[15px] font-semibold text-white shadow-md hover:shadow-lg transition"
                 style={{ background: BRAND.green }}>
                 <MessageCircle className="h-5 w-5" /> Book Pickup on WhatsApp
               </a>
-              <a href="/price-list"
+              <a href="/price-list" data-analytics="price_list_click"
                 className="inline-flex items-center justify-center gap-2 rounded-md border-2 px-6 py-3 text-[15px] font-semibold"
                 style={{ borderColor: BRAND.blue, color: BRAND.blue }}>
                 View Price List <ArrowRight className="h-4 w-4" />
@@ -468,6 +472,65 @@ function PricingTeaser() {
   )
 }
 
+// ---------- FAQ preview ----------
+function FaqPreview() {
+  return (
+    <section id="faq" className="section" style={{ background: BRAND.bg }}>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.14em]" style={{ color: BRAND.blue }}>FAQ</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: BRAND.navy }}>Frequently asked questions</h2>
+          <p className="mt-3 text-slate-600">Quick answers to the most common questions from our customers.</p>
+        </div>
+        <div className="mt-8">
+          <FaqAccordion items={FAQS.slice(0, 6)} />
+        </div>
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <Link href="/faq" className="inline-flex items-center justify-center gap-2 rounded-md border-2 px-5 py-3 text-sm font-semibold" style={{ borderColor: BRAND.blue, color: BRAND.blue }}>
+            See all FAQs <ArrowRight className="h-4 w-4" />
+          </Link>
+          <a href={waLink()} target="_blank" rel="noopener noreferrer" data-analytics="whatsapp_click"
+            className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white" style={{ background: BRAND.green }}>
+            <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------- Reviews (placeholder for verified Google reviews) ----------
+function Reviews() {
+  // Update this once the Google Business Profile link is confirmed.
+  const gbpUrl = 'https://www.google.com/search?q=Urban+Dry+Clean+Greater+Noida+West'
+  return (
+    <section className="section bg-white">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-slate-200 p-6 md:p-10 relative overflow-hidden"
+          style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F9FC 100%)' }}>
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em]" style={{ color: BRAND.blue }}>Customer Reviews</p>
+            <h2 className="mt-2 text-2xl md:text-3xl font-bold tracking-tight" style={{ color: BRAND.navy }}>Trusted by customers in {BUSINESS.serviceArea}</h2>
+            <p className="mt-3 text-slate-600 leading-relaxed">
+              See our latest customer reviews on Google. Your feedback helps us keep improving.
+            </p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <a href={gbpUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white" style={{ background: BRAND.blue }}>
+                See reviews on Google
+              </a>
+              <a href={waLink('Hello Urban Dry Clean, I would like to share feedback about my recent service.')} target="_blank" rel="noopener noreferrer" data-analytics="whatsapp_click"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800">
+                <MessageCircle className="h-4 w-4" /> Share feedback
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ---------- Contact ----------
 function Contact() {
   const mapsQuery = encodeURIComponent(BUSINESS.address.full)
@@ -593,6 +656,8 @@ function App() {
       <WhyUs />
       <PickupDelivery />
       <PricingTeaser />
+      <FaqPreview />
+      <Reviews />
       <Contact />
       <Footer />
       <MobileActionBar />

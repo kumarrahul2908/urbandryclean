@@ -1,6 +1,8 @@
 import './globals.css'
 import { Providers } from './providers'
 import { Inter } from 'next/font/google'
+import Analytics from '@/components/site/Analytics'
+import JsonLd from '@/components/site/JsonLd'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' })
 
@@ -26,9 +28,11 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <JsonLd />
         <script dangerouslySetInnerHTML={{__html:'window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);'}} />
       </head>
       <body className="font-sans antialiased bg-white text-[#13233A]">
+        <Analytics />
         <Providers>{children}</Providers>
       </body>
     </html>

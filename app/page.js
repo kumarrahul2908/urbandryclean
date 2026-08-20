@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import {
   Phone, MessageCircle, Menu, X, ShieldCheck, Sparkles, PackageCheck, Truck,
   Shirt, WashingMachine, Wind, Bed, Layers, Crown, Briefcase, Wand2, Scissors,
   Home as HomeIcon, MapPin, ArrowRight, Clock, HeartHandshake, CheckCircle2
 } from 'lucide-react'
+import logoSrc from '@/lib/assets/logo.jpg'
 import { BUSINESS, waLink, waEnquire } from '@/lib/business'
 import { FAQS } from '@/lib/faq'
 import FaqAccordion from '@/components/site/FaqAccordion'
@@ -28,13 +30,16 @@ const nav = [
   { label: 'Contact', href: '/contact' },
 ]
 
-// ---------- Logo (uses official Urban Dry Clean artwork at /public/logo.jpg) ----------
+// ---------- Logo (uses official Urban Dry Clean artwork, statically bundled) ----------
 function Logo({ dark = false }) {
   const inner = (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <img
-      src="/logo.jpg"
+    <Image
+      src={logoSrc}
       alt="Urban Dry Clean — Premium Dry Cleaning Service"
+      priority
+      placeholder="blur"
+      width={200}
+      height={200}
       className="h-20 md:h-24 w-auto object-contain"
       style={{ mixBlendMode: 'multiply' }}
     />

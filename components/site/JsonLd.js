@@ -1,12 +1,14 @@
 import { BUSINESS } from '@/lib/business'
+import logoSrc from '@/lib/assets/logo.jpg'
 
 export default function JsonLd() {
+  const logoUrl = `${BUSINESS.website}${logoSrc.src}`
   const data = {
     '@context': 'https://schema.org',
     '@type': 'DryCleaningOrLaundry',
     name: BUSINESS.name,
-    image: `${BUSINESS.website}/logo.jpg`,
-    logo: `${BUSINESS.website}/logo.jpg`,
+    image: logoUrl,
+    logo: logoUrl,
     url: BUSINESS.website,
     telephone: BUSINESS.phoneRaw,
     priceRange: '₹39 – ₹1499',

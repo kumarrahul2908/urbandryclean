@@ -1,11 +1,16 @@
 'use client'
+import Image from 'next/image'
+import logoSrc from '@/lib/assets/logo.jpg'
 
 export default function SiteLogo({ dark = false }) {
   const inner = (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <img
-      src="/logo.jpg"
+    <Image
+      src={logoSrc}
       alt="Urban Dry Clean — Premium Dry Cleaning Service"
+      priority
+      placeholder="blur"
+      width={200}
+      height={200}
       className="h-20 md:h-24 w-auto object-contain"
       style={{ mixBlendMode: 'multiply' }}
     />

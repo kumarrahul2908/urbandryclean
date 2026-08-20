@@ -5,10 +5,12 @@ import { BUSINESS, waLink } from '@/lib/business'
 import Logo from '@/components/site/Logo'
 import OfferBadge from '@/components/site/OfferBadge'
 
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
+
 export const metadata = {
   title: 'Price List | Urban Dry Clean — Flat 25% OFF on Dry Cleaning',
   description: 'Complete Urban Dry Clean price list — Flat 25% OFF on dry cleaning across all garments. See rates for shirts, sarees, suits, blankets, quilts and more.',
-  alternates: { canonical: 'https://urbandryclean.in/price-list' },
+  alternates: { canonical: `${SITE_URL}/price-list` },
 }
 
 const BRAND = { blue: '#0759AD', blueDark: '#073F80', green: '#42A62B', greenDark: '#287E1E', navy: '#13233A' }

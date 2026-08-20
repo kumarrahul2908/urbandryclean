@@ -5,11 +5,13 @@ import SiteHeader from '@/components/site/SiteHeader'
 import SiteFooter from '@/components/site/SiteFooter'
 import SiteMobileBar from '@/components/site/SiteMobileBar'
 
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
+
 export const metadata = {
   title: 'About Us | Urban Dry Clean — Premium Dry Cleaning in Greater Noida West',
   description: 'Urban Dry Clean is a professional dry cleaning and garment care service in Greater Noida West with careful handling, quality finishing and convenient WhatsApp booking.',
-  alternates: { canonical: 'https://urbandryclean.in/about' },
-  openGraph: { title: 'About Urban Dry Clean', description: 'Professional dry cleaning and garment care in Greater Noida West.', url: 'https://urbandryclean.in/about', type: 'website' },
+  alternates: { canonical: `${SITE_URL}/about` },
+  openGraph: { title: 'About Urban Dry Clean', description: 'Professional dry cleaning and garment care in Greater Noida West.', url: `${SITE_URL}/about`, type: 'website' },
 }
 
 const BRAND = { blue: '#0759AD', greenDark: '#287E1E', green: '#42A62B', navy: '#13233A', bg: '#F5F9FC' }

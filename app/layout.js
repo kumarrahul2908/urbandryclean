@@ -6,20 +6,22 @@ import JsonLd from '@/components/site/JsonLd'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' })
 
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
+
 export const metadata = {
-  metadataBase: new URL('https://urbandryclean.in'),
+  metadataBase: new URL(SITE_URL),
   title: 'Urban Dry Clean | Dry Cleaning & Laundry Service in Greater Noida West',
   description: 'Urban Dry Clean provides professional dry cleaning, laundry and garment care services in Greater Noida West with convenient WhatsApp booking and pickup & delivery.',
   keywords: ['dry cleaning in Greater Noida West','dry cleaner in Greater Noida West','laundry service in Greater Noida West','dry cleaning near me','blanket cleaning','quilt cleaning','suit dry cleaning','saree dry cleaning','laundry pickup and delivery'],
   openGraph: {
     title: 'Urban Dry Clean | Premium Dry Cleaning Service',
     description: 'Professional dry cleaning, laundry & garment care in Greater Noida West. Book pickup on WhatsApp.',
-    url: 'https://urbandryclean.in',
+    url: SITE_URL,
     siteName: 'Urban Dry Clean',
     locale: 'en_IN',
     type: 'website',
   },
-  alternates: { canonical: 'https://urbandryclean.in' },
+  alternates: { canonical: SITE_URL },
 }
 
 export default function RootLayout({ children }) {

@@ -8,11 +8,13 @@ import SiteHeader from '@/components/site/SiteHeader'
 import SiteFooter from '@/components/site/SiteFooter'
 import SiteMobileBar from '@/components/site/SiteMobileBar'
 
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
+
 export const metadata = {
   title: 'Our Services | Urban Dry Clean — Dry Cleaning & Laundry in Greater Noida West',
   description: 'Explore all Urban Dry Clean services — dry cleaning, laundry, steam iron, blanket & quilt cleaning, saree, suit & blazer, curtain and carpet cleaning in Greater Noida West.',
-  alternates: { canonical: 'https://urbandryclean.in/services' },
-  openGraph: { title: 'Urban Dry Clean — Our Services', description: 'Professional garment care for everyday wear, formal wear and household fabrics.', url: 'https://urbandryclean.in/services', type: 'website' },
+  alternates: { canonical: `${SITE_URL}/services` },
+  openGraph: { title: 'Urban Dry Clean — Our Services', description: 'Professional garment care for everyday wear, formal wear and household fabrics.', url: `${SITE_URL}/services`, type: 'website' },
 }
 
 const ICONS = { Shirt, WashingMachine, Wind, Bed, Layers, Crown, Briefcase, Wand2, Scissors, HomeIcon }

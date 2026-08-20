@@ -1,7 +1,8 @@
 export default function robots() {
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
   return {
     rules: [{ userAgent: '*', allow: '/', disallow: ['/api/'] }],
-    sitemap: 'https://urbandryclean.in/sitemap.xml',
-    host: 'https://urbandryclean.in',
+    sitemap: `${base}/sitemap.xml`,
+    host: base,
   }
 }

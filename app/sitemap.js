@@ -1,5 +1,5 @@
 export default function sitemap() {
-  const base = 'https://urbandryclean.in'
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
   const routes = ['', '/services', '/price-list', '/about', '/faq', '/contact']
   const now = new Date()
   return routes.map(r => ({

@@ -7,11 +7,13 @@ import SiteHeader from '@/components/site/SiteHeader'
 import SiteFooter from '@/components/site/SiteFooter'
 import SiteMobileBar from '@/components/site/SiteMobileBar'
 
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
+
 export const metadata = {
   title: 'FAQ | Urban Dry Clean — Common Questions Answered',
   description: 'Frequently asked questions about Urban Dry Clean — pickup and delivery, prices, service area, blanket & quilt cleaning, saree & suit cleaning and more.',
-  alternates: { canonical: 'https://urbandryclean.in/faq' },
-  openGraph: { title: 'FAQ — Urban Dry Clean', description: 'Answers to common questions about our dry cleaning and laundry services.', url: 'https://urbandryclean.in/faq', type: 'website' },
+  alternates: { canonical: `${SITE_URL}/faq` },
+  openGraph: { title: 'FAQ — Urban Dry Clean', description: 'Answers to common questions about our dry cleaning and laundry services.', url: `${SITE_URL}/faq`, type: 'website' },
 }
 
 const BRAND = { blue: '#0759AD', green: '#42A62B', navy: '#13233A' }

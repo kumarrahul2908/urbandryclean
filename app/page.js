@@ -18,28 +18,31 @@ const BRAND = {
 const nav = [
   { label: 'Home', href: '#home' },
   { label: 'Services', href: '#services' },
-  { label: 'Price List', href: '#pricing' },
+  { label: 'Price List', href: '/price-list' },
   { label: 'How It Works', href: '#how' },
   { label: 'About Us', href: '#about' },
   { label: 'Contact', href: '#contact' },
 ]
 
-// ---------- Logo (SVG lockup using brand colours; swap /public/logo.png later) ----------
-function Logo({ className = 'h-10 w-auto', dark = false }) {
-  const textColor = dark ? '#FFFFFF' : BRAND.navy
-  return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <svg viewBox="0 0 48 48" className="h-10 w-10 shrink-0" aria-hidden>
-        <circle cx="24" cy="24" r="22" fill={BRAND.blue} />
-        <path d="M14 18 L24 12 L34 18 L34 22 L30 22 L30 34 L18 34 L18 22 L14 22 Z" fill="#fff" />
-        <circle cx="24" cy="28" r="3.2" fill={BRAND.green} />
-      </svg>
-      <div className="leading-tight">
-        <div className="font-bold tracking-tight text-[17px]" style={{ color: textColor }}>Urban Dry Clean</div>
-        <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: dark ? '#9DB6D6' : BRAND.blue }}>Premium Garment Care</div>
-      </div>
-    </div>
+// ---------- Logo (uses official Urban Dry Clean artwork at /public/logo.jpg) ----------
+function Logo({ dark = false }) {
+  const inner = (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src="/logo.jpg"
+      alt="Urban Dry Clean — Premium Dry Cleaning Service"
+      className="h-20 md:h-24 w-auto object-contain"
+      style={{ mixBlendMode: 'multiply' }}
+    />
   )
+  if (dark) {
+    return (
+      <div className="inline-flex items-center rounded-lg bg-white px-3 py-2">
+        {inner}
+      </div>
+    )
+  }
+  return <div className="flex items-center">{inner}</div>
 }
 
 // ---------- Header ----------
@@ -55,7 +58,7 @@ function Header() {
   return (
     <header className={`sticky top-0 z-50 w-full backdrop-blur bg-white/90 transition-shadow ${scrolled ? 'shadow-[0_1px_0_0_#e5eefc,0_8px_24px_-16px_rgba(19,35,58,.25)]' : 'border-b border-slate-100'}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-24 items-center justify-between">
           <a href="#home" aria-label="Urban Dry Clean home"><Logo /></a>
           <nav className="hidden lg:flex items-center gap-7">
             {nav.map(n => (
@@ -99,9 +102,15 @@ function Hero() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 md:pt-20 pb-16 md:pb-24">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-              <MapPin className="h-3.5 w-3.5" style={{ color: BRAND.blue }} />
-              Serving Greater Noida West
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full font-bold uppercase tracking-wider text-white shadow-sm px-3.5 py-1.5 text-[11px]"
+                style={{ background: 'linear-gradient(90deg, #42A62B 0%, #287E1E 100%)' }}>
+                <Sparkles className="h-3.5 w-3.5" /> Flat 25% OFF on Dry Cleaning
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                <MapPin className="h-3.5 w-3.5" style={{ color: BRAND.blue }} />
+                Serving Greater Noida West
+              </span>
             </div>
             <h1 className="mt-5 text-4xl sm:text-5xl lg:text-[56px] font-bold leading-[1.05] tracking-tight" style={{ color: BRAND.navy }}>
               Premium Dry Cleaning<br />&amp; Laundry Service
@@ -115,7 +124,7 @@ function Hero() {
                 style={{ background: BRAND.green }}>
                 <MessageCircle className="h-5 w-5" /> Book Pickup on WhatsApp
               </a>
-              <a href="#pricing"
+              <a href="/price-list"
                 className="inline-flex items-center justify-center gap-2 rounded-md border-2 px-6 py-3 text-[15px] font-semibold"
                 style={{ borderColor: BRAND.blue, color: BRAND.blue }}>
                 View Price List <ArrowRight className="h-4 w-4" />
@@ -348,50 +357,111 @@ function PickupDelivery() {
   )
 }
 
-// ---------- Pricing (teaser) ----------
+// ---------- Pricing (teaser with real prices + link to full list) ----------
 function PricingTeaser() {
-  const categories = [
-    { title: 'Clothing', items: ['Shirt', 'Trouser', 'T-Shirt', 'Jeans'] },
-    { title: 'Formal Wear', items: ['Suit (2 pc)', 'Blazer', 'Waistcoat'] },
-    { title: 'Traditional Wear', items: ['Saree (Plain)', 'Saree (Heavy)', 'Kurta / Kurti', 'Sherwani'] },
-    { title: 'Blankets & Quilts', items: ['Blanket (Single)', 'Blanket (Double)', 'Quilt / Rajai'] },
-    { title: 'Household Items', items: ['Curtain (per pc)', 'Carpet (per sq. ft.)', 'Bed Sheet'] },
-    { title: 'Other Services', items: ['Steam Iron', 'Jacket / Coat', 'Woollen Sweater'] },
+  const highlights = [
+    { name: 'Shirt / T-Shirt',                dc: '105',       si: '49',      mrp: '140' },
+    { name: 'Trouser / Pant',                 dc: '113',       si: '59',      mrp: '150' },
+    { name: 'Saree (Plain / Embroidered)',    dc: '199 / 399', si: '99 / 199',mrp: '249 / 499' },
+    { name: 'Suit (2 Piece / 3 Piece)',       dc: '374 / 524', si: '229 / 349', mrp: '499 / 699' },
+    { name: 'Coat / Blazer',                  dc: '299',       si: '169',     mrp: '399' },
+    { name: 'Lehenga (Plain / Embroidered)',  dc: '499 / 749', si: '249 / 399', mrp: '665 / 999' },
+  ]
+  const specials = [
+    { name: 'Blanket (Single / Double)', dc: '299 / 374', si: '199 / 249' },
+    { name: 'Quilt (Single / Double)',   dc: '337 / 412', si: '220 / 279' },
   ]
   return (
     <section id="pricing" className="section bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.14em]" style={{ color: BRAND.blue }}>Price List</p>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: BRAND.navy }}>Simple, transparent pricing</h2>
-            <p className="mt-3 text-slate-600 leading-relaxed">Get the current price for any item on WhatsApp &mdash; we reply quickly with confirmed rates.</p>
+        {/* Offer banner */}
+        <div className="rounded-2xl p-6 md:p-8 text-white relative overflow-hidden shadow-md"
+          style={{ background: `linear-gradient(120deg, ${BRAND.blueDark} 0%, ${BRAND.blue} 55%, ${BRAND.greenDark} 100%)` }}>
+          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10" aria-hidden />
+          <div className="absolute -left-24 -bottom-24 h-64 w-64 rounded-full bg-white/5" aria-hidden />
+          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
+                <Sparkles className="h-3.5 w-3.5" /> Limited Time Offer
+              </div>
+              <h2 className="mt-3 text-2xl md:text-4xl font-bold tracking-tight">FLAT 25% OFF on Dry Cleaning</h2>
+              <p className="mt-2 text-white/85 text-sm md:text-base max-w-2xl">Enjoy a straight 25% discount across every dry-cleaned garment &mdash; from shirts and sarees to suits and lehengas.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <a href="/price-list" className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-semibold" style={{ color: BRAND.blueDark }}>
+                View Full Price List <ArrowRight className="h-4 w-4" />
+              </a>
+              <a href={waLink('Hello Urban Dry Clean, please share the current price list.')} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white border border-white/40 hover:bg-white/10">
+                <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+              </a>
+            </div>
           </div>
-          <a href={waLink('Hello Urban Dry Clean, please share the current price list.')} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white shadow-sm"
-            style={{ background: BRAND.green }}>
-            <MessageCircle className="h-4 w-4" /> Get Current Price on WhatsApp
-          </a>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((c) => (
-            <div key={c.title} className="rounded-xl border border-slate-200 bg-white p-5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[15.5px] font-semibold" style={{ color: BRAND.navy }}>{c.title}</h3>
-                <span className="text-[11px] uppercase tracking-wider text-slate-400">Sample items</span>
+        {/* Popular items preview */}
+        <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: BRAND.blue }}>Popular Items</div>
+                <h3 className="mt-0.5 text-lg font-semibold" style={{ color: BRAND.navy }}>Dry Clean (25% OFF) preview</h3>
               </div>
-              <ul className="mt-3 divide-y divide-slate-100">
-                {c.items.map(item => (
-                  <li key={item} className="flex items-center justify-between py-2.5 text-[14px]">
-                    <span className="text-slate-700">{item}</span>
-                    <span className="text-slate-400">Price on request</span>
-                  </li>
-                ))}
-              </ul>
+              <a href="/price-list" className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold" style={{ color: BRAND.blue }}>
+                See all <ArrowRight className="h-3.5 w-3.5" />
+              </a>
             </div>
-          ))}
+            <div className="divide-y divide-slate-100">
+              {highlights.map(h => (
+                <div key={h.name} className="grid grid-cols-12 items-center gap-2 px-5 py-3.5 text-[14px]">
+                  <div className="col-span-6 sm:col-span-5 font-medium text-slate-800">{h.name}</div>
+                  <div className="col-span-6 sm:col-span-3">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-500">Dry Clean (25% OFF)</div>
+                    <div className="font-bold" style={{ color: BRAND.greenDark }}>₹ {h.dc}</div>
+                  </div>
+                  <div className="col-span-6 sm:col-span-2">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-500">Steam Iron</div>
+                    <div className="font-medium text-slate-700">₹ {h.si}</div>
+                  </div>
+                  <div className="col-span-6 sm:col-span-2 text-right">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400">MRP</div>
+                    <div className="text-slate-400 line-through decoration-slate-300">₹ {h.mrp}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Special reduced prices card */}
+          <div className="rounded-xl border-2 p-5" style={{ borderColor: '#FCD34D', background: 'linear-gradient(180deg, #FFFBEB 0%, #FFF 100%)' }}>
+            <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: '#FEF3C7', color: '#92400E' }}>
+              ★ Special Reduced Prices
+            </div>
+            <h3 className="mt-3 text-lg font-bold" style={{ color: BRAND.navy }}>Blankets &amp; Quilts</h3>
+            <p className="mt-1 text-[13px] text-slate-600">Freshly priced for the season.</p>
+            <div className="mt-4 space-y-3">
+              {specials.map(s => (
+                <div key={s.name} className="rounded-lg bg-white border border-slate-200 p-3.5">
+                  <div className="font-semibold text-[14px] text-slate-900">{s.name}</div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-[13px]">
+                    <div className="rounded-md px-3 py-2" style={{ background: '#EAF5E6' }}>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BRAND.greenDark }}>Dry Clean (25% OFF)</div>
+                      <div className="font-bold" style={{ color: BRAND.greenDark }}>₹ {s.dc}</div>
+                    </div>
+                    <div className="rounded-md px-3 py-2" style={{ background: '#EEF4FB' }}>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BRAND.blueDark }}>Steam Iron</div>
+                      <div className="font-bold" style={{ color: BRAND.blueDark }}>₹ {s.si}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <a href="/price-list#household" className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: BRAND.blue }}>
+              See all household prices <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          </div>
         </div>
+
         <p className="mt-6 text-xs text-slate-500">Final prices confirmed on WhatsApp before pickup. Prices may vary based on fabric, size and finish.</p>
       </div>
     </section>
@@ -400,7 +470,7 @@ function PricingTeaser() {
 
 // ---------- Contact ----------
 function Contact() {
-  const mapsQuery = encodeURIComponent('SF-17, Eros Mart, Eros Sampoornam, Sector 2, Greater Noida West, Uttar Pradesh 201318')
+  const mapsQuery = encodeURIComponent(BUSINESS.address.full)
   return (
     <section id="contact" className="section" style={{ background: BRAND.bg }}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -503,7 +573,7 @@ function MobileActionBar() {
         <a href={waLink()} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-1 py-2.5 text-[12px] font-bold text-white" style={{ background: BRAND.green }}>
           <MessageCircle className="h-5 w-5" /> WhatsApp
         </a>
-        <a href="#pricing" className="flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium text-slate-700">
+        <a href="/price-list" className="flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium text-slate-700">
           <Clock className="h-5 w-5" /> Price List
         </a>
       </div>

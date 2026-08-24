@@ -236,6 +236,195 @@ phase2:
             
             2. ✅ GET /api/ (empty catch-all root)
                - Status: 200 OK
+
+##====================================================================================================
+## Phase 3: Admin Panel (MVP)
+##====================================================================================================
+
+admin_panel:
+  - task: "Admin auth + protected routes + price management + DB-backed public price list"
+    implemented: true
+    working: true
+    file: "/app/lib/mongodb.js, /app/lib/auth.js, /app/lib/seed.js, /app/middleware.js, /app/app/api/[[...path]]/route.js, /app/app/admin/login/page.js, /app/app/admin/layout.js, /app/app/admin/page.js, /app/app/admin/prices/page.js, /app/app/price-list/page.js, /app/app/robots.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: |
+            Implemented MVP admin panel with the following stack:
+              * MongoDB persistence (collections: admins, price_items, services, faqs, promotions, settings, price_history, audit_log, seed_meta)
+              * bcryptjs password hashing (cost 10)
+              * jose-based HS256 JWTs in HTTP-only cookies (7-day expiry)
+              * Next.js middleware guarding /admin/* pages except /admin/login (redirects to /admin/login?next=<path> when unauth)
+              * Idempotent seed on first API call: seeds one super-admin (from ADMIN_EMAIL / ADMIN_PASSWORD env), imports the exact approved 46-item price list from /app/lib/pricelist.js VERBATIM (Men's 13 + Women's 20 + Household 13), seeds 10 services, 10 FAQs, business settings, and one active FLAT 25% OFF promotion.
+              * Public /price-list is now a server component reading directly from MongoDB (only active items shown, sorted by category+display_order).
+              * robots.txt now disallows /admin and /admin/.
+
+            Env vars added to /app/.env:
+              AUTH_SECRET (random 48-char), ADMIN_EMAIL=admin@urbandryclean.in, ADMIN_PASSWORD=UrbanAdmin@2026
+
+            API endpoints implemented:
+              GET  /api/health
+              POST /api/enquiry
+              POST /api/admin/login         (body: {email,password})
+              POST /api/admin/logout
+              GET  /api/admin/me
+              POST /api/admin/change-password
+              GET  /api/admin/stats
+              GET  /api/admin/prices          (protected list)
+              POST /api/admin/prices          (protected create)
+              PUT  /api/admin/prices/:id      (protected update; writes to price_history)
+              DELETE /api/admin/prices/:id    (protected delete; writes to audit_log)
+              GET  /api/admin/price-history
+              GET  /api/public/prices         (active only)
+              GET  /api/public/services       (active only)
+              GET  /api/public/faqs           (active only)
+              GET  /api/public/settings
+              GET  /api/public/promotion
+
+            End-to-end smoke test I already ran (with curl) confirms:
+              - health returns ok
+              - unauth GET /api/admin/prices returns 401
+              - login returns 200 with cookie
+              - GET /api/admin/me returns admin email
+              - PUT /api/admin/prices/:id updates dc_price and GET /api/public/prices immediately reflects the change
+              - GET /admin (unauth) returns 307 -> /admin/login?next=%2Fadmin
+              - 46 items were seeded and are all active
+
+            Please verify comprehensively:
+              1. All API endpoints above (auth flow + CRUD + public read + protection)
+              2. Discount auto-calculation on POST/PUT when mrp is a single number (formula: mrp - mrp*pct/100)
+              3. Price history entry is created on each PUT
+              4. Public /price-list HTML page renders items grouped into mens/womens/household from DB (server rendered)
+              5. /admin/login page loads (HTTP 200)
+              6. Unauthenticated /admin -> redirect to /admin/login
+              7. Wrong password login -> 401
+              8. Bad JSON on POST /api/admin/login -> 400
+              9. robots.txt now disallows /admin
+              10. Seed is idempotent (calling health multiple times shouldn't duplicate)
+        - working: true
+          agent: "testing"
+          comment: |
+            ✅ COMPREHENSIVE BACKEND TEST COMPLETE - ALL 34 TESTS PASSED (34/34)
+            
+            Tested on preview environment: https://premium-cleaning-20.preview.emergentagent.com
+            Login credentials: admin@urbandryclean.in / UrbanAdmin@2026
+            
+            Test Results Summary:
+            
+            HEALTH & SEED (6/6 passed):
+            ✅ 1. GET /api/health returns correct structure with status='ok', service='Urban Dry Clean', timestamp
+            ✅ 2. GET /api/public/prices returns 46 items with correct sample (Shirt/T-Shirt: dc_price=105, si_price=49, mrp=140)
+            ✅ 3. GET /api/public/faqs returns 10 FAQs
+            ✅ 4. GET /api/public/services returns 10 services
+            ✅ 5. GET /api/public/promotion returns correct promotion (25% discount, active, applies to Dry Cleaning)
+            ✅ 6. GET /api/public/settings returns correct business_name='Urban Dry Clean'
+            
+            AUTH (8/8 passed):
+            ✅ 7. GET /api/admin/me without cookie returns 401 Unauthorized
+            ✅ 8. GET /api/admin/prices without cookie returns 401
+            ✅ 9. POST /api/admin/login with wrong password returns 401 Invalid credentials
+            ✅ 10. POST /api/admin/login with malformed JSON returns 400 Invalid payload
+            ✅ 11. POST /api/admin/login with correct credentials returns 200 + udc_admin cookie (HTTP-only)
+            ✅ 12. GET /api/admin/me after login returns admin data (email, role)
+            ✅ 13. POST /api/admin/logout clears auth, subsequent /api/admin/me returns 401
+            ✅ 14. Re-login for CRUD tests successful
+            
+            STATS (1/1 passed):
+            ✅ 15. GET /api/admin/stats returns correct counts (priceTotal=46, activePromos=1, plus svcTotal, svcActive, promos, faqTotal)
+            
+            PRICES CRUD (8/8 passed):
+            ✅ 16. GET /api/admin/prices returns 46 items
+            ✅ 17. POST /api/admin/prices creates item with auto-computed dc_price (mrp=200, discount=25% → dc_price=150)
+            ✅ 18. PUT /api/admin/prices/<id> updates discount_percent to 40%, dc_price auto-recomputed to 120
+            ✅ 19. GET /api/admin/price-history contains update entry (old.discount_percent=25, new.discount_percent=40)
+            ✅ 20. PUT item with active=false removes from public list (not in /api/public/prices)
+            ✅ 21. DELETE /api/admin/prices/<id> removes item from admin list
+            ✅ 22. DELETE /api/admin/prices/<nonexistent-id> returns 404
+            ✅ 23. PUT /api/admin/prices/<nonexistent-id> returns 404
+            
+            PUBLIC REFLECTS ADMIN CHANGE (4/4 passed):
+            ✅ 24. Found 'Shirt / T-Shirt' item with dc_price=105
+            ✅ 25. PUT 'Shirt / T-Shirt' dc_price to '99' successful
+            ✅ 26. GET /api/public/prices immediately reflects updated dc_price='99'
+            ✅ 27. Restored 'Shirt / T-Shirt' dc_price to '105'
+            
+            PASSWORD CHANGE (3/3 passed):
+            ✅ 28. POST /api/admin/change-password with short password (<8 chars) returns 400
+            ✅ 29. POST /api/admin/change-password with wrong current password returns 401
+            ✅ 30. POST /api/admin/change-password full cycle: change to new password, logout, login with new password, change back to original - all successful
+            
+            ROBOTS.TXT (1/1 passed):
+            ✅ 31. GET /robots.txt contains 'Disallow: /admin/' directive
+            
+            MIDDLEWARE PAGE PROTECTION (2/2 passed):
+            ✅ 32. GET /admin without cookie returns 307 redirect to /admin/login?next=%2Fadmin
+            ✅ 33. GET /admin/login returns 200 (login page accessible)
+            
+            IDEMPOTENT SEED (1/1 passed):
+            ✅ 34. Calling /api/health 3 times does not duplicate price items (count unchanged: 46 → 46)
+            
+            All backend API endpoints are working correctly:
+            • Authentication flow (login, logout, session management with HTTP-only cookies)
+            • Authorization (middleware protection, 401 responses for unauth requests)
+            • Price CRUD operations (create, read, update, delete with proper validation)
+            • Auto-calculation of dc_price from mrp and discount_percent
+            • Price history tracking on updates
+            • Public endpoints returning only active items
+            • Admin stats aggregation
+            • Password change with validation
+            • Idempotent seeding
+            • robots.txt SEO configuration
+            • Middleware page protection with redirects
+            
+            No critical issues found. Admin Panel MVP backend is production-ready.
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: |
+        Phase 3 (Admin Panel MVP) implementation complete on preview.
+        Login credentials for testing: admin@urbandryclean.in / UrbanAdmin@2026
+        Test on http://localhost:3000 (backend can also use https://premium-cleaning-20.preview.emergentagent.com).
+        Focus areas: auth cookie flow, protection of admin/* routes, price CRUD, public price endpoint reflecting admin changes, discount auto-calc.
+    - agent: "testing"
+      message: |
+        ✅ COMPREHENSIVE BACKEND TEST COMPLETE - ALL 34 TESTS PASSED
+        
+        Executed comprehensive backend test suite covering all 34 checks from the review request.
+        Test file: /app/backend_test.py
+        
+        All backend functionality verified and working:
+        • Health & Seed endpoints (6/6 passed)
+        • Authentication & Authorization (8/8 passed)
+        • Admin Stats (1/1 passed)
+        • Price CRUD operations (8/8 passed)
+        • Public API reflects admin changes (4/4 passed)
+        • Password change flow (3/3 passed)
+        • robots.txt configuration (1/1 passed)
+        • Middleware page protection (2/2 passed)
+        • Idempotent seeding (1/1 passed)
+        
+        Key features verified:
+        ✓ JWT-based auth with HTTP-only cookies (udc_admin)
+        ✓ Middleware protection of /admin/* routes with redirect to /admin/login
+        ✓ 46 price items seeded correctly (13 mens + 20 womens + 13 household)
+        ✓ Auto-calculation of dc_price from mrp and discount_percent
+        ✓ Price history tracking on updates
+        ✓ Public endpoints return only active items
+        ✓ Admin endpoints require authentication (401 when unauth)
+        ✓ Password validation (min 8 chars)
+        ✓ Seed is idempotent (no duplication on repeated calls)
+        
+        No critical issues found. Admin Panel MVP backend is production-ready.
+
                - Response: Same health payload as /api/health
                - Verified: Empty path correctly returns health check
             

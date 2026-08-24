@@ -1,9 +1,12 @@
 import Link from 'next/link'
 import { ArrowLeft, MessageCircle, Phone, MapPin, Info, Star } from 'lucide-react'
-import { CATEGORIES } from '@/lib/pricelist'
+import { getDb, COLLECTIONS } from '@/lib/mongodb'
+import { ensureSeeded } from '@/lib/seed'
 import { BUSINESS, waLink } from '@/lib/business'
 import Logo from '@/components/site/Logo'
 import OfferBadge from '@/components/site/OfferBadge'
+
+export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
 
@@ -14,6 +17,40 @@ export const metadata = {
 }
 
 const BRAND = { blue: '#0759AD', blueDark: '#073F80', green: '#42A62B', greenDark: '#287E1E', navy: '#13233A' }
+
+const CATEGORY_META = {
+  mens: { title: "Men's Wear", hasMRP: true },
+  womens: { title: "Women's Wear", hasMRP: true },
+  household: { title: 'Household', hasMRP: false },
+}
+
+async function loadCategories() {
+  await ensureSeeded()
+  const db = await getDb()
+  const items = await db.collection(COLLECTIONS.price_items)
+    .find({ active: true })
+    .sort({ category: 1, display_order: 1 })
+    .toArray()
+
+  const grouped = {}
+  for (const it of items) {
+    if (!grouped[it.category]) grouped[it.category] = []
+    grouped[it.category].push({
+      name: it.name,
+      dc: it.dc_price || '—',
+      si: it.si_price || '—',
+      mrp: it.mrp ?? null,
+      special: !!it.special,
+    })
+  }
+  const order = ['mens', 'womens', 'household']
+  return order.filter(id => grouped[id]?.length).map(id => ({
+    id,
+    title: CATEGORY_META[id].title,
+    hasMRP: CATEGORY_META[id].hasMRP,
+    items: grouped[id],
+  }))
+}
 
 function Cell({ children, muted, strike, className = '' }) {
   return (
@@ -31,21 +68,18 @@ function CategoryTable({ cat }) {
         <span className="h-px flex-1" style={{ background: 'linear-gradient(90deg, #0759AD22, transparent)' }} />
       </div>
 
-      {/* Desktop / tablet table */}
       <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-[14px]">
           <thead>
             <tr className="text-left" style={{ background: '#F5F9FC' }}>
               <th className="py-3.5 px-4 font-semibold text-slate-700 w-1/2">Article</th>
-              <th className="py-3.5 px-4 font-semibold" style={{ color: BRAND.greenDark }}>
-                Dry Clean (25% OFF) ₹
-              </th>
+              <th className="py-3.5 px-4 font-semibold" style={{ color: BRAND.greenDark }}>Dry Clean (25% OFF) ₹</th>
               <th className="py-3.5 px-4 font-semibold text-slate-700">Steam Iron Onwards ₹</th>
               {cat.hasMRP && <th className="py-3.5 px-4 font-semibold text-slate-500">Dry Clean MRP ₹</th>}
             </tr>
           </thead>
           <tbody>
-            {cat.items.map((it, i) => (
+            {cat.items.map(it => (
               <tr key={it.name} className={`border-t border-slate-100 ${it.special ? 'bg-amber-50/50' : ''}`}>
                 <td className="py-3.5 px-4">
                   <div className="flex items-center gap-2">
@@ -57,15 +91,11 @@ function CategoryTable({ cat }) {
                     )}
                   </div>
                 </td>
-                <td className="py-3.5 px-4">
-                  <span className="font-bold text-[15px]" style={{ color: BRAND.greenDark }}>₹ {it.dc}</span>
-                </td>
-                <td className="py-3.5 px-4">
-                  <Cell>₹ {it.si}</Cell>
-                </td>
+                <td className="py-3.5 px-4"><span className="font-bold text-[15px]" style={{ color: BRAND.greenDark }}>₹ {it.dc}</span></td>
+                <td className="py-3.5 px-4"><Cell>₹ {it.si}</Cell></td>
                 {cat.hasMRP && (
                   <td className="py-3.5 px-4">
-                    {it.mrp === '—' ? <Cell muted>—</Cell> : <Cell strike muted>₹ {it.mrp}</Cell>}
+                    {(!it.mrp || it.mrp === '—') ? <Cell muted>—</Cell> : <Cell strike muted>₹ {it.mrp}</Cell>}
                   </td>
                 )}
               </tr>
@@ -74,7 +104,6 @@ function CategoryTable({ cat }) {
         </table>
       </div>
 
-      {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {cat.items.map(it => (
           <div key={it.name} className={`rounded-xl border p-4 bg-white ${it.special ? 'border-amber-200 bg-amber-50/40' : 'border-slate-200'}`}>
@@ -99,10 +128,8 @@ function CategoryTable({ cat }) {
                 <div className="col-span-2 rounded-md px-3 py-1.5 border border-dashed border-slate-200">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Dry Clean MRP</span>
-                    {it.mrp === '—'
-                      ? <span className="text-[13px] text-slate-400">—</span>
-                      : <span className="text-[13px] font-medium text-slate-500 line-through decoration-slate-400/70">₹ {it.mrp}</span>
-                    }
+                    {(!it.mrp || it.mrp === '—') ? <span className="text-[13px] text-slate-400">—</span>
+                      : <span className="text-[13px] font-medium text-slate-500 line-through decoration-slate-400/70">₹ {it.mrp}</span>}
                   </div>
                 </div>
               )}
@@ -114,12 +141,12 @@ function CategoryTable({ cat }) {
   )
 }
 
-export default function PriceListPage() {
+export default async function PriceListPage() {
+  const CATEGORIES = await loadCategories()
   return (
     <main className="pb-24 md:pb-14">
-      {/* Simple sub-header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
           <Link href="/" className="flex items-center gap-2"><Logo /></Link>
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-[#0759AD]">
             <ArrowLeft className="h-4 w-4" /> Back to Home
@@ -127,14 +154,11 @@ export default function PriceListPage() {
         </div>
       </header>
 
-      {/* Hero */}
       <section className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #F5F9FC 0%, #FFFFFF 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           <div className="flex flex-col items-start gap-4">
             <OfferBadge size="lg" />
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight" style={{ color: BRAND.navy }}>
-              Urban Dry Clean — Price List
-            </h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight" style={{ color: BRAND.navy }}>Urban Dry Clean — Price List</h1>
             <p className="text-slate-600 max-w-2xl leading-relaxed">
               Transparent rates for every garment. Enjoy a <span className="font-semibold" style={{ color: BRAND.greenDark }}>flat 25% off on dry cleaning</span>. Steam iron prices shown are “onwards”.
             </p>
@@ -148,26 +172,20 @@ export default function PriceListPage() {
                 <Phone className="h-4 w-4" /> Call {BUSINESS.phone}
               </a>
             </div>
-
-            {/* Category quick nav */}
             <div className="mt-4 flex flex-wrap gap-2">
               {CATEGORIES.map(c => (
-                <a key={c.id} href={`#${c.id}`} className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:border-[#0759AD] hover:text-[#0759AD]">
-                  {c.title}
-                </a>
+                <a key={c.id} href={`#${c.id}`} className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:border-[#0759AD] hover:text-[#0759AD]">{c.title}</a>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Tables */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="space-y-12">
           {CATEGORIES.map(cat => <CategoryTable key={cat.id} cat={cat} />)}
         </div>
 
-        {/* Notes */}
         <div className="mt-10 rounded-xl border border-slate-200 bg-white p-5">
           <div className="flex items-start gap-3">
             <div className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center" style={{ background: '#EEF4FB' }}>
@@ -183,7 +201,6 @@ export default function PriceListPage() {
           </div>
         </div>
 
-        {/* Address strip */}
         <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
           <div className="flex items-start gap-3">
             <div className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center" style={{ background: '#EAF5E6' }}>
@@ -207,7 +224,6 @@ export default function PriceListPage() {
         </div>
       </section>
 
-      {/* Mobile bottom bar */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-8px_24px_-16px_rgba(19,35,58,.25)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="grid grid-cols-3">
           <a href={`tel:${BUSINESS.phoneRaw}`} className="flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium text-slate-700">

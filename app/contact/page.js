@@ -9,9 +9,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://urbandryclean.in'
 
 export const metadata = {
   title: 'Contact Us | Urban Dry Clean — Book Pickup & Delivery',
-  description: 'Contact Urban Dry Clean for dry cleaning, laundry and garment care in Greater Noida West. Call, WhatsApp or visit our store at S-Mart Eros Sampoornam.',
+  description: 'Contact Urban Dry Clean for dry cleaning, laundry and garment care in Greater Noida West. Call, WhatsApp or visit our store at Eros Mart, Eros Sampoornam.',
   alternates: { canonical: `${SITE_URL}/contact` },
-  openGraph: { title: 'Contact Urban Dry Clean', description: 'Call, WhatsApp or visit us at S-Mart Eros Sampoornam, Sector 2, Patwari, Greater Noida.', url: `${SITE_URL}/contact`, type: 'website' },
+  openGraph: { title: 'Contact Urban Dry Clean', description: 'Call, WhatsApp or visit us at Eros Mart, Eros Sampoornam, Sector 2, Greater Noida West.', url: `${SITE_URL}/contact`, type: 'website' },
 }
 
 const BRAND = { blue: '#0759AD', blueDark: '#073F80', green: '#42A62B', greenDark: '#287E1E', navy: '#13233A', bg: '#F5F9FC' }

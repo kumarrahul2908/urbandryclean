@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Search, Loader2, Save, X, Trash2, Power, PowerOff, AlertCircle, Sparkles, Filter, ExternalLink } from 'lucide-react'
+import { Plus, Search, Loader2, Save, X, Trash2, Power, PowerOff, AlertCircle, Sparkles, Filter, ExternalLink, Download, Upload } from 'lucide-react'
 
 const CATEGORIES = [
   { id: 'mens', label: "Men's Wear" },
@@ -29,6 +29,27 @@ export default function AdminPricesPage() {
   const [editing, setEditing] = useState(null) // item or emptyItem
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState(null) // {id,name} to delete
+  const [importPreview, setImportPreview] = useState(null)
+  const [importing, setImporting] = useState(false)
+
+  const doExport = () => { window.location.href = '/api/admin/prices/export' }
+  const onImportPick = async (e) => {
+    const file = e.target.files?.[0]; e.target.value = ''
+    if (!file) return
+    const fd = new FormData(); fd.append('file', file)
+    const r = await fetch('/api/admin/prices/import-preview', { method: 'POST', body: fd })
+    const d = await r.json()
+    if (!r.ok) { alert(d?.error || 'Import preview failed'); return }
+    setImportPreview(d)
+  }
+  const commitImport = async () => {
+    if (!importPreview) return
+    setImporting(true)
+    const r = await fetch('/api/admin/prices/import-commit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ newRows: importPreview.newRows, updates: importPreview.updates }) })
+    const d = await r.json(); setImporting(false)
+    if (!r.ok) { alert(d?.error || 'Import failed'); return }
+    setImportPreview(null); load()
+  }
 
   const load = async () => {
     setLoading(true); setErr('')
@@ -96,7 +117,14 @@ export default function AdminPricesPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Prices</h1>
           <p className="text-sm text-slate-500 mt-1">Add, edit and toggle price items. Public site updates instantly.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={doExport} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 hover:border-[#0759AD]">
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+          <label className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 hover:border-[#0759AD] cursor-pointer">
+            <Upload className="h-4 w-4" /> Import CSV
+            <input type="file" accept=".csv" onChange={onImportPick} className="hidden" />
+          </label>
           <a href="/price-list" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 hover:border-[#0759AD]">
             <ExternalLink className="h-4 w-4" /> View public
           </a>
@@ -305,6 +333,38 @@ export default function AdminPricesPage() {
             <div className="mt-4 flex gap-2">
               <button onClick={() => setConfirm(null)} className="flex-1 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold">Cancel</button>
               <button onClick={doDelete} className="flex-1 rounded-md bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* CSV Import preview modal */}
+      {importPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setImportPreview(null)} />
+          <div className="relative w-full max-w-2xl max-h-[85vh] rounded-2xl bg-white shadow-xl flex flex-col">
+            <div className="px-5 py-3 border-b">
+              <h3 className="font-semibold text-lg">CSV Import Preview</h3>
+              <p className="text-sm text-slate-500">Total rows: {importPreview.total} · New: {importPreview.newRows.length} · Updates: {importPreview.updates.length} · Unchanged: {importPreview.unchanged.length} · Errors: {importPreview.errors.length}</p>
+            </div>
+            <div className="overflow-y-auto p-5 space-y-3">
+              {importPreview.errors.length > 0 && (
+                <div className="rounded-md border border-rose-200 bg-rose-50 p-3">
+                  <div className="text-sm font-semibold text-rose-800">Errors (import will be blocked):</div>
+                  <ul className="mt-1.5 text-[12px] text-rose-700 space-y-0.5">{importPreview.errors.map((e, i) => <li key={i}>Row {e.row}: {e.error}</li>)}</ul>
+                </div>
+              )}
+              {importPreview.newRows.length > 0 && (
+                <div><div className="text-sm font-semibold mb-1.5">New items ({importPreview.newRows.length})</div><ul className="text-[12px] text-slate-700 space-y-0.5">{importPreview.newRows.map((n, i) => <li key={i} className="truncate">Row {n.row}: <b>{n.next.name}</b> — {n.next.category}, ₹{n.next.dc_price || '—'}</li>)}</ul></div>
+              )}
+              {importPreview.updates.length > 0 && (
+                <div><div className="text-sm font-semibold mb-1.5">Updates ({importPreview.updates.length})</div><ul className="text-[12px] text-slate-700 space-y-0.5">{importPreview.updates.map((u, i) => <li key={i} className="truncate">Row {u.row}: <b>{u.current.name}</b> — DC ₹{u.current.dc_price || '—'} → ₹{u.next.dc_price || '—'}</li>)}</ul></div>
+              )}
+            </div>
+            <div className="px-5 py-3 border-t flex gap-2">
+              <button onClick={() => setImportPreview(null)} className="flex-1 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold">Cancel</button>
+              <button onClick={commitImport} disabled={importing || importPreview.errors.length > 0} className="flex-1 inline-flex items-center justify-center gap-2 rounded-md bg-[#0759AD] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+                {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Confirm Import
+              </button>
             </div>
           </div>
         </div>

@@ -3,20 +3,22 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
-  LayoutDashboard, IndianRupee, Wrench, HelpCircle, Sparkles, Settings, History, Users, LogOut, Menu, X, ExternalLink
+  LayoutDashboard, IndianRupee, Wrench, HelpCircle, Sparkles, Settings, History, Package, FileText, KeyRound, LogOut, Menu, X, ExternalLink
 } from 'lucide-react'
 import Image from 'next/image'
 import logoSrc from '@/lib/assets/logo.jpg'
 
 const NAV = [
-  { href: '/admin',            label: 'Dashboard',       icon: LayoutDashboard, ready: true },
-  { href: '/admin/prices',     label: 'Prices',          icon: IndianRupee,     ready: true },
-  { href: '/admin/services',   label: 'Services',        icon: Wrench,          ready: false },
-  { href: '/admin/promotions', label: 'Promotions',      icon: Sparkles,        ready: false },
-  { href: '/admin/faqs',       label: 'FAQs',            icon: HelpCircle,      ready: false },
-  { href: '/admin/price-history', label: 'Price History',icon: History,         ready: false },
-  { href: '/admin/settings',   label: 'Settings',        icon: Settings,        ready: false },
-  { href: '/admin/users',      label: 'Users',           icon: Users,           ready: false },
+  { href: '/admin',                label: 'Dashboard',       icon: LayoutDashboard, ready: true },
+  { href: '/admin/prices',         label: 'Prices',          icon: IndianRupee,     ready: true },
+  { href: '/admin/services',       label: 'Services',        icon: Wrench,          ready: true },
+  { href: '/admin/promotions',     label: 'Promotions',      icon: Sparkles,        ready: true },
+  { href: '/admin/faqs',           label: 'FAQs',            icon: HelpCircle,      ready: true },
+  { href: '/admin/price-history',  label: 'Price History',   icon: History,         ready: true },
+  { href: '/admin/bulk',           label: 'Bulk Update',     icon: Package,         ready: true },
+  { href: '/admin/audit-log',      label: 'Audit Log',       icon: FileText,        ready: true },
+  { href: '/admin/settings',       label: 'Business Settings', icon: Settings,      ready: true },
+  { href: '/admin/change-password',label: 'Change Password', icon: KeyRound,        ready: true },
 ]
 
 export default function AdminLayout({ children }) {

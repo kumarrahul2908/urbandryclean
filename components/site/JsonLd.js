@@ -14,16 +14,13 @@ export default function JsonLd() {
     priceRange: '₹39 – ₹1499',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: 'Shop SF17, 2nd Floor, S-Mart Eros Sampoornam, Sector 2, Patwari',
-      addressLocality: 'Greater Noida',
+      streetAddress: 'SF-17, Eros Mart, Eros Sampoornam, Sector 2',
+      addressLocality: 'Greater Noida West',
       addressRegion: 'Uttar Pradesh',
-      postalCode: '201306',
+      postalCode: '201318',
       addressCountry: 'IN',
     },
-    areaServed: {
-      '@type': 'Place',
-      name: BUSINESS.serviceArea,
-    },
+    areaServed: { '@type': 'Place', name: BUSINESS.serviceArea },
     sameAs: [],
   }
   return (

@@ -189,6 +189,14 @@ export async function GET(request, { params }) {
     return json({ items })
   }
 
+  if (path === 'admin/leads') {
+    const q = {}
+    const st = url.searchParams.get('status')
+    if (st && st !== 'all') q.status = st
+    const items = await db.collection('leads').find(q).sort({ created_at: -1 }).limit(500).toArray()
+    return json({ items })
+  }
+
   return json({ error: 'Not found' }, 404)
 }
 
@@ -242,6 +250,30 @@ export async function POST(request, { params }) {
       await db.collection('enquiries').insertOne({ _id: uuidv4(), ...body, at: new Date() })
       return json({ status: 'received', echo: body })
     } catch { return json({ error: 'Invalid payload' }, 400) }
+  }
+
+  // ---------- Public: submit pickup lead ----------
+  if (path === 'leads') {
+    let body
+    try { body = await request.json() } catch { return json({ error: 'Invalid payload' }, 400) }
+    const phone = String(body?.phone || '').trim()
+    if (!phone) return json({ error: 'Mobile number is required' }, 400)
+    if (!/^[+0-9\s\-()]{8,}$/.test(phone)) return json({ error: 'Please enter a valid mobile number' }, 400)
+    const doc = {
+      _id: uuidv4(),
+      name: String(body?.name || '').trim(),
+      phone,
+      address: String(body?.address || '').trim(),
+      date: String(body?.date || '').trim(),
+      time: String(body?.time || '').trim(),
+      source: String(body?.source || 'header_form').trim(),
+      status: 'new',
+      ip: clientIp(request),
+      created_at: new Date(),
+      updated_at: new Date(),
+    }
+    await db.collection('leads').insertOne(doc)
+    return json({ ok: true, id: doc._id })
   }
 
   // Everything below requires admin.
@@ -598,6 +630,19 @@ export async function PUT(request, { params }) {
     return json({ ok: true })
   }
 
+  // Leads
+  if (p[0] === 'admin' && p[1] === 'leads' && p[2]) {
+    const id = p[2]
+    let body; try { body = await request.json() } catch { return json({ error: 'Invalid payload' }, 400) }
+    const allowed = ['status', 'name', 'phone', 'address', 'date', 'time', 'notes']
+    const set = { updated_at: new Date() }
+    for (const k of allowed) if (typeof body[k] === 'string') set[k] = body[k].trim()
+    const r = await db.collection('leads').updateOne({ _id: id }, { $set: set })
+    if (r.matchedCount === 0) return json({ error: 'Not found' }, 404)
+    await writeAudit(db, 'lead_updated', admin.email, { target: id })
+    return json({ ok: true })
+  }
+
   return json({ error: 'Not found' }, 404)
 }
 
@@ -610,6 +655,15 @@ export async function DELETE(request, { params }) {
   const db = await getDb()
   const admin = await requireAdmin()
   if (!admin) return json({ error: 'Unauthorized' }, 401)
+
+  if (p[0] === 'admin' && p[1] === 'leads' && p[2]) {
+    const id = p[2]
+    const existing = await db.collection('leads').findOne({ _id: id })
+    if (!existing) return json({ error: 'Not found' }, 404)
+    await db.collection('leads').deleteOne({ _id: id })
+    await writeAudit(db, 'lead_deleted', admin.email, { target: id })
+    return json({ ok: true })
+  }
 
   if (p[0] === 'admin' && p[1] === 'prices' && p[2]) {
     const id = p[2]

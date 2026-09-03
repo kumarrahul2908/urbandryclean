@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import BookPickupModal from '@/components/site/BookPickupModal'
 import {
   Phone, MessageCircle, Menu, X, ShieldCheck, Sparkles, PackageCheck, Truck,
   Shirt, WashingMachine, Wind, Bed, Layers, Crown, Briefcase, Wand2, Scissors,
@@ -58,6 +59,7 @@ function Logo({ dark = false }) {
 function Header() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [pickupOpen, setPickupOpen] = useState(false)
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
     window.addEventListener('scroll', onScroll); onScroll()
@@ -78,9 +80,9 @@ function Header() {
             <a href={`tel:${BUSINESS.phoneRaw}`} data-analytics="phone_click" className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-800 hover:border-[#0759AD] hover:text-[#0759AD]">
               <Phone className="h-4 w-4" /> Call Now
             </a>
-            <a href={waLink()} target="_blank" rel="noopener noreferrer" data-analytics="whatsapp_click" className="inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm" style={{ background: BRAND.green }}>
+            <button type="button" onClick={() => setPickupOpen(true)} data-analytics="book_pickup_click" className="inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm" style={{ background: BRAND.green }}>
               <MessageCircle className="h-4 w-4" /> Book Pickup
-            </a>
+            </button>
           </div>
           <button onClick={() => setOpen(o => !o)} className="xl:hidden inline-flex items-center justify-center rounded-md p-2 text-slate-700 hover:bg-slate-100" aria-label="Toggle menu">
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -95,11 +97,12 @@ function Header() {
             ))}
             <div className="grid grid-cols-2 gap-2 pt-3 pb-1">
               <a href={`tel:${BUSINESS.phoneRaw}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium"><Phone className="h-4 w-4" /> Call</a>
-              <a href={waLink()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-white" style={{ background: BRAND.green }}><MessageCircle className="h-4 w-4" /> WhatsApp</a>
+              <button type="button" onClick={() => { setOpen(false); setPickupOpen(true) }} className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-white" style={{ background: BRAND.green }}><MessageCircle className="h-4 w-4" /> Book Pickup</button>
             </div>
           </div>
         </div>
       )}
+      <BookPickupModal open={pickupOpen} onClose={() => setPickupOpen(false)} />
     </header>
   )
 }

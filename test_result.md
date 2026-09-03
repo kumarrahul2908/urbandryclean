@@ -398,12 +398,192 @@ phase2_admin:
                  - GET /faq renders active FAQs from DB, and the answer for "Where is Urban Dry Clean located?" contains "201318".
                  - GET /price-list still renders the 46 seeded items.
               4. Address correctness:
+
+##====================================================================================================
+## Phase 2b: Header "Book Pickup" form + Leads (targeted feature)
+##====================================================================================================
+
+leads_feature:
+  - task: "Header Book Pickup form + /admin/leads (small targeted change)"
+    implemented: true
+    working: true
+    file: "/app/components/site/BookPickupModal.js, /app/components/site/SiteHeader.js, /app/app/page.js, /app/app/api/[[...path]]/route.js, /app/app/admin/leads/page.js, /app/app/admin/layout.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: |
+            SCOPE (per user request, no other change):
+              - Only the HEADER "Book Pickup" button now opens a modal form (both inline homepage Header and shared SiteHeader used on /services, /faq, /about, /contact, /services etc.).
+              - The exact WhatsApp URL `https://wa.me/919710108181?text=Hello%20Urban%20Dry%20Clean%2C%20I%20would%20like%20to%20book%20a%20pickup.%20Please%20share%20the%20pickup%20details.` is preserved verbatim as a "Also message on WhatsApp" button inside the modal's success screen.
+              - All OTHER WhatsApp CTAs on the site (Hero primary CTA "Book Pickup on WhatsApp", per-service "Enquire on WhatsApp", pickup delivery card, pricing teaser, contact page, mobile bottom bar) still go via waLink() to WhatsApp \u2014 unchanged.
+
+            NEW BookPickupModal component (/app/components/site/BookPickupModal.js):
+              Fields: Mobile Number (required, type=tel), Name (optional), Pickup Address (optional textarea), Preferred Date (type=date), Preferred Time (type=time).
+              Validation: phone required + regex ^[+0-9\\s\\-()]{8,}$; inline error, no submit until fixed.
+              Prevents double-submit while POST is in flight (disabled button + loader).
+              Success screen shows thank-you message + Close + optional "Also message on WhatsApp" (exact WA link).
+              ESC-to-close, body scroll locked while open, click-outside-to-close.
+
+            NEW backend endpoints (in existing /app/app/api/[[...path]]/route.js):
+              POST /api/leads (public)          — creates a lead in the "leads" collection
+                                                  { name, phone*, address, date, time, source }
+                                                  400 if phone missing/invalid; 200 { ok:true, id }
+              GET  /api/admin/leads (auth)      — list newest first (limit 500); ?status=new|contacted|completed|cancelled|all
+              PUT  /api/admin/leads/:id (auth)  — update status/name/phone/etc.; audit log entry
+              DELETE /api/admin/leads/:id (auth) — audit log entry
+
+            NEW admin page /admin/leads:
+              Desktop table + mobile cards.
+              Search by name/phone/address; status filter dropdown.
+              Inline status change (new/contacted/completed/cancelled) with color badges.
+              Row actions: tel: link, WhatsApp reply link (pre-filled), Delete confirm.
+              Sidebar entry added between Dashboard and Prices (icon: Inbox).
+
+            NOT MODIFIED:
+              - Existing prices, services, FAQs, promotions, settings, admin auth, price CRUD, all other WhatsApp links.
+              - Public site design, colors, fonts, layout.
+
+            Smoke-tested manually:
+              - POST /api/leads no phone -> 400 { error: 'Mobile number is required' }
+              - POST /api/leads valid payload -> 200, lead saved
+              - GET /api/admin/leads unauth -> 401
+              - Login + GET /api/admin/leads -> lead visible
+              - DELETE /api/admin/leads/:id -> removed
+              - Admin password was reset to UrbanAdmin@2026 via scripts/reset-admin.js (previous test session had left it changed)
+
+            Please verify (backend):
+              1. POST /api/leads
+                 - Missing phone -> 400 with error "Mobile number is required"
+                 - Malformed phone (e.g., "abc") -> 400 "Please enter a valid mobile number"
+                 - Valid payload with all fields -> 200 { ok:true, id }
+                 - Valid payload with only phone -> 200 (name/address/date/time optional)
+              2. GET /api/admin/leads without cookie -> 401
+              3. Login as admin, GET /api/admin/leads -> 200 { items: [...] } newest first, includes created lead
+              4. PUT /api/admin/leads/<id> { status: "contacted" } -> 200; subsequent GET returns updated status
+              5. DELETE /api/admin/leads/<id> -> 200; item gone
+              6. Regression: header-linked WhatsApp URL preservation
+                 - The exact string "https://wa.me/919710108181?text=Hello%20Urban%20Dry%20Clean%2C%20I%20would%20like%20to%20book%20a%20pickup.%20Please%20share%20the%20pickup%20details." MUST appear in /app/components/site/BookPickupModal.js (verified in grep output).
+                 - All other pages' Book Pickup / Enquire buttons continue to use waLink() and open wa.me.
+              7. Regression: existing Phase 1 + Phase 2 endpoints still work (auth/login, prices CRUD, public/prices, robots.txt, sitemap.xml)
+              8. Middleware: /admin/leads redirects to /admin/login when unauth (307)
+              9. NO leftover test leads after run.
+
+            Credentials: admin@urbandryclean.in / UrbanAdmin@2026 (was just reset).
+        - working: true
+          agent: "testing"
+          comment: |
+            ✅ TARGETED BACKEND TEST COMPLETE - ALL 24 TESTS PASSED (24/24)
+            
+            Tested on preview environment: https://premium-cleaning-20.preview.emergentagent.com
+            Admin credentials: admin@urbandryclean.in / UrbanAdmin@2026
+            Test file: /app/backend_test_leads.py
+            
+            TEST RESULTS BY SECTION:
+            
+            ✅ PART A: POST /api/leads (PUBLIC ENDPOINT) - 5/5 PASSED
+            • A1. POST with empty body {} → 400 "Mobile number is required" ✓
+            • A2. POST with { name: "Test" } (no phone) → 400 "Mobile number is required" ✓
+            • A3. POST with { phone: "abc" } → 400 "Please enter a valid mobile number" ✓
+            • A4. POST with { phone: "+91 98765 43210" } → 200 { ok: true, id } ✓
+            • A5. POST with all fields → 200 { ok: true, id } ✓
+            
+            ✅ PART B: ADMIN LEADS ENDPOINTS (AUTH REQUIRED) - 11/11 PASSED
+            • B1. GET /api/admin/leads without cookie → 401 ✓
+            • B2. POST /api/admin/login with admin credentials → 200, cookie set ✓
+            • B3. GET /api/admin/leads (authed) → 200 { items: [...] }, both leads present with status="new", newest first (created_at desc) ✓
+            • B4. GET /api/admin/leads?status=new → 200, filters correctly (2 items, all status='new') ✓
+            • B5. GET /api/admin/leads?status=completed → 200, empty (0 items, does not contain new leads) ✓
+            • B6a. PUT /api/admin/leads/<A5-id> with { status: "contacted" } → 200 { ok: true } ✓
+            • B6b. Subsequent GET shows lead with status="contacted" ✓
+            • B7. PUT with invalid id → 404 ✓
+            • B8a. DELETE /api/admin/leads/<A4-id> and <A5-id> → both return 200 ✓
+            • B8b. Subsequent GET does NOT include deleted leads ✓
+            • B9. DELETE with invalid id → 404 ✓
+            
+            ✅ PART C: WHATSAPP LINK PRESERVATION REGRESSION - 3/3 PASSED
+            • C1. GET / (server-rendered HTML) contains exact WhatsApp URL:
+                 https://wa.me/919710108181?text=Hello%20Urban%20Dry%20Clean%2C%20I%20would%20like%20to%20book%20a%20pickup.%20Please%20share%20the%20pickup%20details. ✓
+            • C2. GET /contact has WhatsApp link (wa.me/91971010818x) ✓
+            • C3. GET /services has per-service "Enquire on WhatsApp" links (wa.me/919710108181) ✓
+            
+            ✅ PART D: MIDDLEWARE REGRESSION - 1/1 PASSED
+            • D1. GET /admin/leads with no cookie, allow_redirects=False → 307, Location=/admin/login?next=%2Fadmin%2Fleads ✓
+            
+            ✅ PART E: SITEMAP/ROBOTS REGRESSION - 2/2 PASSED
+            • E1. GET /sitemap.xml → 200, DOES NOT contain /admin ✓
+            • E2. GET /robots.txt → contains "Disallow: /admin/" ✓
+            
+            ✅ PART F: CLEANUP & FINAL STATE - 2/2 PASSED
+            • F1. GET /api/admin/leads returns 0 QA test leads (cleanup successful) ✓
+            • F2. Admin password is still UrbanAdmin@2026 (no password changes during test) ✓
+            
+            SUMMARY:
+            All backend endpoints for the "Book Pickup" leads feature are working correctly:
+            • Public POST /api/leads endpoint validates phone correctly and creates leads
+            • Admin GET /api/admin/leads endpoint requires auth and returns leads newest first
+            • Admin PUT /api/admin/leads/:id updates lead status correctly
+            • Admin DELETE /api/admin/leads/:id removes leads correctly
+            • Status filtering (?status=new|contacted|completed|cancelled) works correctly
+            • WhatsApp link preservation verified on /, /contact, and /services pages
+            • Middleware protection working (307 redirect to /admin/login with next param)
+            • Sitemap and robots.txt correctly exclude /admin routes
+            • No leftover test data after cleanup
+            
+            The leads feature is production-ready. No critical issues found.
+
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: |
+        Small targeted change complete: header Book Pickup button opens modal form; submissions saved to `leads` collection and visible at /admin/leads.
+        Please backend-test only the items above (spec 1-9). Do NOT re-run the full Phase 2 regression, that has already been confirmed passing 109/116.
+        Admin credentials just reset: admin@urbandryclean.in / UrbanAdmin@2026.
+        Cleanup: any test lead you create please DELETE at the end.
+
                  - grep for "201306" or "Patwari" anywhere in /app (excluding node_modules, .next, scripts) must return zero results.
                  - /api/public/settings must return pin: "201318" and address_line2 containing "Greater Noida West".
               5. Middleware:
                  - Unauthed GET /admin/services, /admin/faqs, /admin/settings, /admin/promotions, /admin/price-history, /admin/bulk, /admin/audit-log, /admin/change-password each return 307 to /admin/login?next=<path>.
               6. robots.txt still contains "Disallow: /admin/".
               7. Sitemap does NOT contain any /admin URL.
+    - agent: "testing"
+      message: |
+        ✅ TARGETED BACKEND TEST COMPLETE - ALL 24 TESTS PASSED
+        
+        Executed targeted backend test for "Book Pickup" leads feature only (as requested, did NOT run full Phase 2 regression).
+        Test file: /app/backend_test_leads.py
+        
+        Test Results:
+        • POST /api/leads (public): 5/5 passed ✅
+        • Admin leads endpoints: 11/11 passed ✅
+        • WhatsApp link preservation: 3/3 passed ✅
+        • Middleware regression: 1/1 passed ✅
+        • Sitemap/robots regression: 2/2 passed ✅
+        • Cleanup & final state: 2/2 passed ✅
+        
+        Key Findings:
+        ✓ Public POST /api/leads validates phone correctly (400 for missing/invalid, 200 for valid)
+        ✓ Admin endpoints require authentication (401 without cookie)
+        ✓ GET /api/admin/leads returns leads newest first with correct status filtering
+        ✓ PUT /api/admin/leads/:id updates status correctly
+        ✓ DELETE /api/admin/leads/:id removes leads correctly
+        ✓ WhatsApp link preservation verified on /, /contact, and /services pages
+        ✓ Middleware protection working (307 redirect with next param)
+        ✓ Sitemap and robots.txt correctly exclude /admin routes
+        ✓ No leftover test data after cleanup
+        ✓ Admin password unchanged (UrbanAdmin@2026)
+        
+        The "Book Pickup" leads feature is production-ready. No critical issues found.
+
 
             Test credentials remain: admin@urbandryclean.in / UrbanAdmin@2026
         - working: true

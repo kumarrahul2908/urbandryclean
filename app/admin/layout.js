@@ -3,13 +3,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
-  LayoutDashboard, IndianRupee, Wrench, HelpCircle, Sparkles, Settings, History, Package, FileText, KeyRound, LogOut, Menu, X, ExternalLink
+  LayoutDashboard, IndianRupee, Wrench, HelpCircle, Sparkles, Settings, History, Package, FileText, KeyRound, Inbox, LogOut, Menu, X, ExternalLink
 } from 'lucide-react'
 import Image from 'next/image'
 import logoSrc from '@/lib/assets/logo.jpg'
 
 const NAV = [
   { href: '/admin',                label: 'Dashboard',       icon: LayoutDashboard, ready: true },
+  { href: '/admin/leads',          label: 'Pickup Leads',    icon: Inbox,           ready: true },
   { href: '/admin/prices',         label: 'Prices',          icon: IndianRupee,     ready: true },
   { href: '/admin/services',       label: 'Services',        icon: Wrench,          ready: true },
   { href: '/admin/promotions',     label: 'Promotions',      icon: Sparkles,        ready: true },

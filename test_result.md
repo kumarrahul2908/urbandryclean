@@ -1093,3 +1093,118 @@ agent_communication:
         Minor observation: Next.js logs show warnings about awaiting params (Next.js 15 requirement), but functionality is not affected - all endpoints return correct responses.
         
         No critical issues found. Backend is production-ready.
+
+
+## Session — Popup positioning fix + /book-pickup standalone page (Jun 2025)
+
+Two small targeted changes:
+
+1. **Popup positioning fix (BookPickupModal.js)**
+   - Root cause: modal was rendered *inside* `<header>` which uses `backdrop-blur`. `backdrop-filter` creates a new containing block for descendants with `position: fixed`, so the modal's `fixed inset-0` was being clipped to the header's box (96px tall) instead of the viewport.
+   - Fix: Render the modal via `React.createPortal(node, document.body)` — this escapes the header stacking/containing-block trap. Also switched layout to `flex items-start pt-24 sm:pt-28 pb-6 overflow-y-auto` so the panel sits ~15 px below the sticky h-24 header with a clean gap, and the outer container scrolls on short viewports.
+   - No design/field/color changes to the form itself.
+
+2. **New standalone `/book-pickup` page** (`app/book-pickup/page.js`)
+   - Reuses the extracted shared `PickupForm` component (`components/site/PickupForm.js`) so there is NO duplicated form logic.
+   - Landing-page layout: minimal top bar (logo + phone) + hero pitch + form card + footer, mobile-first.
+   - SEO metadata added (title, description, canonical, OG).
+   - Form submits to the **existing** `POST /api/leads` endpoint with `source: "book_pickup_page"`.
+
+3. **Source tracking**
+   - Backend `POST /api/leads` already accepted a `source` field; no schema/API change needed.
+   - Header popup sends `source: "header_form"`, standalone page sends `source: "book_pickup_page"`.
+   - Admin `/admin/leads` table + mobile cards now show a Source badge with friendly labels.
+
+### Manual verification done
+- Desktop @1440×900: header not blurred/dimmed; modal panel at y=112, header bottom=97 → 15 px clean gap; full form visible; submission succeeds and shows Thank-you card.
+- Standalone `/book-pickup` page renders on desktop; form submission succeeds.
+- Existing WhatsApp URL `wa.me/919710108181?text=...` untouched — verified in code (BookPickupModal success card, /book-pickup "Prefer WhatsApp?" link, all other CTAs untouched).
+
+### Files changed
+- `components/site/BookPickupModal.js` — portal + positioning
+- `components/site/PickupForm.js` — NEW (extracted reusable form)
+- `app/book-pickup/page.js` — NEW (standalone landing page)
+- `app/admin/leads/page.js` — added Source column + badge
+
+### Backend test needed
+- POST /api/leads with `source=header_form` and `source=book_pickup_page` — verify both persist and appear in GET /api/admin/leads. Also confirm phone-required validation still rejects empty/invalid mobile.
+
+##====================================================================================================
+## Phase 2c: Pickup-Lead Source Tracking Verification (targeted test)
+##====================================================================================================
+
+source_tracking_verification:
+  - task: "Verify pickup-lead source field tracking (header_form vs book_pickup_page)"
+    implemented: true
+    working: true
+    file: "/app/app/api/[[...path]]/route.js (POST /api/leads, GET /api/admin/leads)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: |
+            ✅ TARGETED SOURCE TRACKING TEST COMPLETE - ALL 6 TESTS PASSED (6/6)
+            
+            Tested on preview environment: https://premium-cleaning-20.preview.emergentagent.com
+            Admin credentials: admin@urbandryclean.in / UrbanAdmin@2026
+            Test file: /app/backend_test_source_tracking.py
+            
+            TEST RESULTS:
+            
+            ✅ TEST 1: POST /api/leads with source='header_form'
+               - Payload: { phone: "+91 9876500001", name: "Header Test", address: "Addr 1", date: "2026-06-05", time: "10:00", source: "header_form" }
+               - Status: 200 OK
+               - Response: { ok: true, id: <uuid> }
+               - Lead ID saved for verification
+            
+            ✅ TEST 2: POST /api/leads with source='book_pickup_page'
+               - Payload: { phone: "+91 9876500002", name: "Standalone Test", address: "Addr 2", date: "2026-06-06", time: "11:00", source: "book_pickup_page" }
+               - Status: 200 OK
+               - Response: { ok: true, id: <uuid> }
+               - Lead ID saved for verification
+            
+            ✅ TEST 3: POST /api/leads with empty phone
+               - Payload: { phone: "" }
+               - Status: 400 Bad Request
+               - Error: "Mobile number is required"
+               - Validation working correctly
+            
+            ✅ TEST 4: POST /api/leads with invalid phone 'abc'
+               - Payload: { phone: "abc" }
+               - Status: 400 Bad Request
+               - Error: "Please enter a valid mobile number"
+               - Validation working correctly
+            
+            ✅ TEST 5: Admin login
+               - POST /api/admin/login with credentials
+               - Status: 200 OK
+               - Cookie 'udc_admin' set successfully
+               - Session maintained for subsequent requests
+            
+            ✅ TEST 6: GET /api/admin/leads and verify source values
+               - GET /api/admin/leads with authenticated session
+               - Status: 200 OK
+               - Total leads returned: 8 (including 2 test leads)
+               - Verified items contain required fields: _id, phone, source, status, created_at
+               - Found both test leads in response
+               - Header lead source: 'header_form' ✓ (matches expected)
+               - Page lead source: 'book_pickup_page' ✓ (matches expected)
+               - Source field tracking working correctly
+            
+            ✅ CLEANUP: Both test leads deleted successfully
+            
+            SUMMARY:
+            The pickup-lead source tracking feature is working correctly:
+            • POST /api/leads accepts 'source' field and stores it in the database
+            • Source values 'header_form' and 'book_pickup_page' are correctly preserved
+            • GET /api/admin/leads returns leads with correct source values
+            • Phone validation working correctly (required field, format validation)
+            • Admin authentication and authorization working correctly
+            • No data leakage - test leads cleaned up successfully
+            
+            The source field allows the business to track which form (header modal vs standalone page) generated each lead, enabling better conversion tracking and UX optimization.
+            
+            No issues found. Feature is production-ready.
+

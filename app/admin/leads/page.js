@@ -10,6 +10,12 @@ const STATUS_COLORS = {
   cancelled: 'bg-slate-100 text-slate-500',
 }
 
+const SOURCE_LABELS = {
+  header_form: 'Header Popup',
+  book_pickup_page: 'Book Pickup Page',
+}
+const sourceLabel = (s) => SOURCE_LABELS[s] || (s ? String(s).replace(/_/g, ' ') : '—')
+
 function fmt(d) { try { return new Date(d).toLocaleString('en-IN') } catch { return String(d) } }
 
 export default function AdminLeadsPage() {
@@ -91,6 +97,7 @@ export default function AdminLeadsPage() {
                   <th className="text-left py-3 px-4">Mobile</th>
                   <th className="text-left py-3 px-4">Address</th>
                   <th className="text-left py-3 px-4">Preferred</th>
+                  <th className="text-left py-3 px-4">Source</th>
                   <th className="text-left py-3 px-4">Status</th>
                   <th className="text-right py-3 px-4">Actions</th>
                 </tr>
@@ -104,6 +111,9 @@ export default function AdminLeadsPage() {
                     <td className="py-3 px-4 text-slate-600 max-w-xs truncate" title={it.address}>{it.address || <span className="text-slate-400">—</span>}</td>
                     <td className="py-3 px-4 text-slate-600 whitespace-nowrap">
                       {it.date || '—'}{it.time ? ` · ${it.time}` : ''}
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[11px] font-medium">{sourceLabel(it.source)}</span>
                     </td>
                     <td className="py-3 px-4">
                       <select value={it.status || 'new'} onChange={e => updateStatus(it._id, e.target.value)}
@@ -123,7 +133,7 @@ export default function AdminLeadsPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={7} className="py-10 text-center text-slate-500">No pickup requests yet.</td></tr>
+                  <tr><td colSpan={8} className="py-10 text-center text-slate-500">No pickup requests yet.</td></tr>
                 )}
               </tbody>
             </table>
@@ -146,6 +156,7 @@ export default function AdminLeadsPage() {
                 <div className="mt-2 text-[13px] text-slate-700"><b>Mobile:</b> {it.phone}</div>
                 {it.address && <div className="text-[13px] text-slate-700"><b>Address:</b> {it.address}</div>}
                 {(it.date || it.time) && <div className="text-[13px] text-slate-700"><b>Preferred:</b> {it.date || '—'}{it.time ? ` · ${it.time}` : ''}</div>}
+                <div className="mt-1"><span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[11px] font-medium">{sourceLabel(it.source)}</span></div>
                 <div className="mt-3 flex items-center gap-2">
                   <a href={`tel:${it.phone}`} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-[12px] font-semibold"><Phone className="h-4 w-4" /> Call</a>
                   {waLink(it) && (

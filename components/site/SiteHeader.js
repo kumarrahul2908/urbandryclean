@@ -36,15 +36,15 @@ export default function SiteHeader() {
               <MessageCircle className="h-4 w-4" /> Book Pickup
             </button>
           </div>
-          {/* Mobile: always-visible tap-to-call before the hamburger */}
+          {/* Mobile: always-visible tap-to-call with the actual number before the hamburger */}
           <a
             href={`tel:${BUSINESS.phoneRaw}`}
             data-analytics="phone_click_mobile"
             aria-label={`Call ${BUSINESS.phone}`}
-            className="lg:hidden inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-semibold text-white shadow-sm mr-1"
+            className="lg:hidden inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-bold text-white shadow-sm mr-1"
             style={{ background: BRAND.green }}
           >
-            <Phone className="h-4 w-4" /> Call
+            <Phone className="h-4 w-4" /> 97101 08181
           </a>
           <button onClick={() => setOpen(o => !o)} className="xl:hidden inline-flex items-center justify-center rounded-md p-2 text-slate-700 hover:bg-slate-100" aria-label="Toggle menu">
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

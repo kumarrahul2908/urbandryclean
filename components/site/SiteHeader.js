@@ -29,13 +29,23 @@ export default function SiteHeader() {
             ))}
           </nav>
           <div className="hidden lg:flex items-center gap-2">
-            <a href={`tel:${BUSINESS.phoneRaw}`} data-analytics="phone_click" className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-800 hover:border-[#0759AD] hover:text-[#0759AD]">
-              <Phone className="h-4 w-4" /> Call Now
+            <a href={`tel:${BUSINESS.phoneRaw}`} data-analytics="phone_click" aria-label={`Call ${BUSINESS.phone}`} className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-800 hover:border-[#0759AD] hover:text-[#0759AD]">
+              <Phone className="h-4 w-4" /> Call {BUSINESS.phone}
             </a>
             <button type="button" onClick={() => setPickupOpen(true)} data-analytics="book_pickup_click" className="inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm" style={{ background: BRAND.green }}>
               <MessageCircle className="h-4 w-4" /> Book Pickup
             </button>
           </div>
+          {/* Mobile: always-visible tap-to-call before the hamburger */}
+          <a
+            href={`tel:${BUSINESS.phoneRaw}`}
+            data-analytics="phone_click_mobile"
+            aria-label={`Call ${BUSINESS.phone}`}
+            className="lg:hidden inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-semibold text-white shadow-sm mr-1"
+            style={{ background: BRAND.green }}
+          >
+            <Phone className="h-4 w-4" /> Call
+          </a>
           <button onClick={() => setOpen(o => !o)} className="xl:hidden inline-flex items-center justify-center rounded-md p-2 text-slate-700 hover:bg-slate-100" aria-label="Toggle menu">
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>

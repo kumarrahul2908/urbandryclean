@@ -34,7 +34,11 @@ export default function SiteFooter() {
       </div>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10 pt-6 border-t border-white/10 text-xs text-slate-400 flex flex-col md:flex-row items-center justify-between gap-2">
         <div>&copy; 2026 Urban Dry Clean. All rights reserved.</div>
-        <div>Made with care in {BUSINESS.serviceArea}</div>
+        <div className="flex items-center gap-4">
+          <Link href="/privacy-policy" className="hover:text-white">Privacy Policy</Link>
+          <Link href="/contact" className="hover:text-white">Contact</Link>
+          <span className="hidden md:inline">Made with care in {BUSINESS.serviceArea}</span>
+        </div>
       </div>
     </footer>
   )

@@ -652,7 +652,11 @@ function Footer() {
       </div>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10 pt-6 border-t border-white/10 text-xs text-slate-400 flex flex-col md:flex-row items-center justify-between gap-2">
         <div>&copy; 2026 Urban Dry Clean. All rights reserved.</div>
-        <div>Made with care in Greater Noida West</div>
+        <div className="flex items-center gap-4">
+          <a href="/privacy-policy" className="hover:text-white">Privacy Policy</a>
+          <a href="/contact" className="hover:text-white">Contact</a>
+          <span className="hidden md:inline">Made with care in Greater Noida West</span>
+        </div>
       </div>
     </footer>
   )

@@ -197,6 +197,14 @@ export async function GET(request, { params }) {
     return json({ items })
   }
 
+  if (path === 'admin/deletion-requests') {
+    const q = {}
+    const st = url.searchParams.get('status')
+    if (st && st !== 'all') q.status = st
+    const items = await db.collection('deletion_requests').find(q).sort({ created_at: -1 }).limit(500).toArray()
+    return json({ items })
+  }
+
   return json({ error: 'Not found' }, 404)
 }
 
@@ -274,6 +282,38 @@ export async function POST(request, { params }) {
     }
     await db.collection('leads').insertOne(doc)
     return json({ ok: true, id: doc._id })
+  }
+
+  // ---------- Public: submit data-deletion request (Meta / WhatsApp compliance) ----------
+  if (path === 'data-deletion') {
+    let body
+    try { body = await request.json() } catch { return json({ error: 'Invalid payload' }, 400) }
+    const phone = String(body?.phone || '').trim()
+    const email = String(body?.email || '').trim().toLowerCase()
+    const name = String(body?.name || '').trim()
+    const reason = String(body?.reason || '').trim().slice(0, 1000)
+    const consent = body?.consent === true
+    if (!phone && !email) return json({ error: 'Please provide either a mobile number or an email so we can identify your data.' }, 400)
+    if (phone && !/^[+0-9\s\-()]{8,}$/.test(phone)) return json({ error: 'Please enter a valid mobile number.' }, 400)
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Please enter a valid email address.' }, 400)
+    if (!consent) return json({ error: 'Please confirm the deletion consent to proceed.' }, 400)
+    const doc = {
+      _id: uuidv4(),
+      confirmation_code: 'UDC-' + uuidv4().split('-')[0].toUpperCase(),
+      name, phone, email, reason,
+      status: 'received', // received | in_progress | completed | rejected
+      ip: clientIp(request),
+      user_agent: (request.headers.get('user-agent') || '').slice(0, 300),
+      created_at: new Date(),
+      updated_at: new Date(),
+    }
+    await db.collection('deletion_requests').insertOne(doc)
+    return json({
+      ok: true,
+      confirmation_code: doc.confirmation_code,
+      status_url: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/data-deletion`,
+      message: 'We have received your data-deletion request. Our team will process it within 30 days and confirm via your chosen contact.',
+    })
   }
 
   // Everything below requires admin.
@@ -643,6 +683,20 @@ export async function PUT(request, { params }) {
     return json({ ok: true })
   }
 
+  // Deletion requests — admin status update
+  if (p[0] === 'admin' && p[1] === 'deletion-requests' && p[2]) {
+    const id = p[2]
+    let body; try { body = await request.json() } catch { return json({ error: 'Invalid payload' }, 400) }
+    const ALLOWED_STATUS = ['received', 'in_progress', 'completed', 'rejected']
+    const set = { updated_at: new Date() }
+    if (typeof body.status === 'string' && ALLOWED_STATUS.includes(body.status)) set.status = body.status
+    if (typeof body.notes === 'string') set.notes = body.notes.trim().slice(0, 1000)
+    const r = await db.collection('deletion_requests').updateOne({ _id: id }, { $set: set })
+    if (r.matchedCount === 0) return json({ error: 'Not found' }, 404)
+    await writeAudit(db, 'deletion_request_updated', admin.email, { target: id, status: set.status })
+    return json({ ok: true })
+  }
+
   return json({ error: 'Not found' }, 404)
 }
 
@@ -662,6 +716,15 @@ export async function DELETE(request, { params }) {
     if (!existing) return json({ error: 'Not found' }, 404)
     await db.collection('leads').deleteOne({ _id: id })
     await writeAudit(db, 'lead_deleted', admin.email, { target: id })
+    return json({ ok: true })
+  }
+
+  if (p[0] === 'admin' && p[1] === 'deletion-requests' && p[2]) {
+    const id = p[2]
+    const existing = await db.collection('deletion_requests').findOne({ _id: id })
+    if (!existing) return json({ error: 'Not found' }, 404)
+    await db.collection('deletion_requests').deleteOne({ _id: id })
+    await writeAudit(db, 'deletion_request_deleted', admin.email, { target: id })
     return json({ ok: true })
   }
 
